@@ -9,7 +9,6 @@ public class GameOfLife
 
     public Simulation simulation;
     private SimulationDisplay simulationDisplay;
-    private byte[] cells;
 
     private void Start()
     {
@@ -20,7 +19,7 @@ public class GameOfLife
 
     private void Update()
     {
-        cells = simulation.GenerateFrame();
+        var cells = simulation.GenerateFrame();
         simulationDisplay.DrawSimulation(cells);
     }
 }

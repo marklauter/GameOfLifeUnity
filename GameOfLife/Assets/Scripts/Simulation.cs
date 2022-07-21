@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 // https://en.wikipedia.org/wiki/Conway's_Game_of_Life
 public class Simulation
@@ -17,7 +16,7 @@ public class Simulation
     private readonly byte[] cells;
     private readonly int[][] neighborOffsets;
     private HashSet<int> activeCells = new();
-    private readonly System.Random rng = new System.Random(DateTime.UtcNow.Millisecond);
+    private readonly System.Random rng = new(DateTime.UtcNow.Millisecond);
     private const byte alive = 0xFF;
     private const byte dead = 0x00;
 
@@ -27,69 +26,69 @@ public class Simulation
         this.height = height;
         this.chanceOfLife = chanceOfLife;
 
-        span = width * height;
-        cells = new byte[span];
-        neighborOffsets = new int[span][];
-        changedCells = new List<(int offset, byte value)>(span);
+        this.span = width * height;
+        this.cells = new byte[this.span];
+        this.neighborOffsets = new int[this.span][];
+        this.changedCells = new List<(int offset, byte value)>(this.span);
 
-        PrecomputeNeighborOffsets();
-        LetThereBeLight();
+        this.PrecomputeNeighborOffsets();
+        this.LetThereBeLight();
     }
 
-    public byte[] GenerateFrame()
+    public List<(int offset, byte value)> GenerateFrame()
     {
-        ApplyRules();
+        this.ApplyRules();
         ++this.generations;
-        return cells;
+        return this.changedCells;
     }
 
     private void LetThereBeLight()
     {
-        for (int x = 0; x < width; ++x)
+        for (var x = 0; x < this.width; ++x)
         {
-            for (int y = 0; y < height; ++y)
+            for (var y = 0; y < this.height; ++y)
             {
-                cells[y * width + x] = rng.NextDouble() * 100 <= chanceOfLife
+                this.cells[y * this.width + x] = this.rng.NextDouble() * 100 <= this.chanceOfLife
                     ? (byte)0xFF
                     : (byte)0x00;
             }
         }
 
-        InitializeActiveCells();
+        this.InitializeActiveCells();
     }
 
     private void InitializeActiveCells()
     {
-        for (int i = 0; i < span; ++i)
+        for (var i = 0; i < this.span; ++i)
         {
-            if (cells[i] == 0xFF)
+            if (this.cells[i] == 0xFF)
             {
-                _ = activeCells.Add(i);
+                _ = this.activeCells.Add(i);
             }
         }
     }
 
     private void PrecomputeNeighborOffsets()
     {
-        for (int x = 0; x < width; ++x)
+        for (var x = 0; x < this.width; ++x)
         {
-            for (int y = 0; y < height; ++y)
+            for (var y = 0; y < this.height; ++y)
             {
-                int xmin = x > 0 ? x - 1 : width - 1;
-                int xmax = x < width - 1 ? x + 1 : 0;
-                int ymin = y > 0 ? y - 1 : height - 1;
-                int ymax = y < height - 1 ? y + 1 : 0;
-                int currentPixel = y * width + x;
+                var xmin = x > 0 ? x - 1 : this.width - 1;
+                var xmax = x < this.width - 1 ? x + 1 : 0;
+                var ymin = y > 0 ? y - 1 : this.height - 1;
+                var ymax = y < this.height - 1 ? y + 1 : 0;
+                var currentPixel = y * this.width + x;
 
-                neighborOffsets[currentPixel] = new int[8];
-                neighborOffsets[currentPixel][0] = xmin + width * ymin;
-                neighborOffsets[currentPixel][1] = xmin + width * y;
-                neighborOffsets[currentPixel][2] = xmin + width * ymax;
-                neighborOffsets[currentPixel][3] = xmax + width * ymin;
-                neighborOffsets[currentPixel][4] = xmax + width * y;
-                neighborOffsets[currentPixel][5] = xmax + width * ymax;
-                neighborOffsets[currentPixel][6] = x + width * ymin;
-                neighborOffsets[currentPixel][7] = x + width * ymax;
+                this.neighborOffsets[currentPixel] = new int[8];
+                this.neighborOffsets[currentPixel][0] = xmin + this.width * ymin;
+                this.neighborOffsets[currentPixel][1] = xmin + this.width * y;
+                this.neighborOffsets[currentPixel][2] = xmin + this.width * ymax;
+                this.neighborOffsets[currentPixel][3] = xmax + this.width * ymin;
+                this.neighborOffsets[currentPixel][4] = xmax + this.width * y;
+                this.neighborOffsets[currentPixel][5] = xmax + this.width * ymax;
+                this.neighborOffsets[currentPixel][6] = x + this.width * ymin;
+                this.neighborOffsets[currentPixel][7] = x + this.width * ymax;
             }
         }
     }
@@ -97,48 +96,48 @@ public class Simulation
     private void ApplyRules()
     {
         HashSet<int> newActiveCells = new();
-        changedCells.Clear();
+        this.changedCells.Clear();
         HashSet<int> visited = new();
 
         // outer loop all the active cells and inner loop all their neighbors
         // this ignores dead regions and saves time
-        foreach (int cellOffset in activeCells)
+        foreach (var cellOffset in this.activeCells)
         {
-            int offset = cellOffset;
-            int[] outerLocalNeighborOffsets = neighborOffsets[offset];
+            var offset = cellOffset;
+            var outerLocalNeighborOffsets = this.neighborOffsets[offset];
 
             if (!visited.Contains(offset))
             {
                 _ = visited.Add(offset);
 
-                byte originalValue = cells[offset];
-                int liveNeighborCount =
+                var originalValue = this.cells[offset];
+                var liveNeighborCount =
                     // left column
-                    (cells[outerLocalNeighborOffsets[0]]
-                    + cells[outerLocalNeighborOffsets[1]]
-                    + cells[outerLocalNeighborOffsets[2]]
+                    (this.cells[outerLocalNeighborOffsets[0]]
+                    + this.cells[outerLocalNeighborOffsets[1]]
+                    + this.cells[outerLocalNeighborOffsets[2]]
                     // right colum
-                    + cells[outerLocalNeighborOffsets[3]]
-                    + cells[outerLocalNeighborOffsets[4]]
-                    + cells[outerLocalNeighborOffsets[5]]
+                    + this.cells[outerLocalNeighborOffsets[3]]
+                    + this.cells[outerLocalNeighborOffsets[4]]
+                    + this.cells[outerLocalNeighborOffsets[5]]
                     // center column (excluding current pixel)
-                    + cells[outerLocalNeighborOffsets[6]]
-                    + cells[outerLocalNeighborOffsets[7]])
+                    + this.cells[outerLocalNeighborOffsets[6]]
+                    + this.cells[outerLocalNeighborOffsets[7]])
                     / alive;
 
-                byte newValue = (byte)(
+                var newValue = (byte)(
                     (((((liveNeighborCount >> 2) ^ 0x01) << 1) & liveNeighborCount) >> 1)
                     * ((liveNeighborCount & 0x01) | (originalValue & 0x01))
                     * alive);
 
-                if(newValue == dead && rng.NextDouble() * 100 <= 0.015)
-                {
-                    newValue ^= alive;
-                }
+                //if(newValue == dead && rng.NextDouble() * 100 <= 0.015)
+                //{
+                //    newValue ^= alive;
+                //}
 
                 if (originalValue != newValue)
                 {
-                    changedCells.Add((offset, newValue));
+                    this.changedCells.Add((offset, newValue));
                 }
 
                 if (newValue == 0xFF)
@@ -147,7 +146,7 @@ public class Simulation
                 }
             }
 
-            for (int j = 0; j < 8; ++j)
+            for (var j = 0; j < 8; ++j)
             {
                 offset = outerLocalNeighborOffsets[j];
 
@@ -155,35 +154,35 @@ public class Simulation
                 {
                     _ = visited.Add(offset);
 
-                    byte originalValue = cells[offset];
-                    int[] innerLocalNeighborOffsets = neighborOffsets[offset];
-                    int liveNeighborCount =
+                    var originalValue = this.cells[offset];
+                    var innerLocalNeighborOffsets = this.neighborOffsets[offset];
+                    var liveNeighborCount =
                         // left column
-                        (cells[innerLocalNeighborOffsets[0]]
-                        + cells[innerLocalNeighborOffsets[1]]
-                        + cells[innerLocalNeighborOffsets[2]]
+                        (this.cells[innerLocalNeighborOffsets[0]]
+                        + this.cells[innerLocalNeighborOffsets[1]]
+                        + this.cells[innerLocalNeighborOffsets[2]]
                         // right colum
-                        + cells[innerLocalNeighborOffsets[3]]
-                        + cells[innerLocalNeighborOffsets[4]]
-                        + cells[innerLocalNeighborOffsets[5]]
+                        + this.cells[innerLocalNeighborOffsets[3]]
+                        + this.cells[innerLocalNeighborOffsets[4]]
+                        + this.cells[innerLocalNeighborOffsets[5]]
                         // center column (excluding current pixel)
-                        + cells[innerLocalNeighborOffsets[6]]
-                        + cells[innerLocalNeighborOffsets[7]])
+                        + this.cells[innerLocalNeighborOffsets[6]]
+                        + this.cells[innerLocalNeighborOffsets[7]])
                         / 0xFF;
 
-                    byte newValue = (byte)(
+                    var newValue = (byte)(
                         (((((liveNeighborCount >> 2) ^ 0x01) << 1) & liveNeighborCount) >> 1)
                         * ((liveNeighborCount & 0x01) | (originalValue & 0x01))
                         * 0xFF);
 
-                    if (rng.NextDouble() * 100 <= 0.015)
-                    {
-                        newValue ^= alive;
-                    }
+                    //if (this.rng.NextDouble() * 100 <= 0.015)
+                    //{
+                    //    newValue ^= alive;
+                    //}
 
                     if (originalValue != newValue)
                     {
-                        changedCells.Add((offset, newValue));
+                        this.changedCells.Add((offset, newValue));
                     }
 
                     if (newValue == 0xFF)
@@ -195,12 +194,12 @@ public class Simulation
         }
 
         // update the cell values only for changed
-        foreach ((int offset, byte value) in changedCells)
+        foreach ((var offset, var value) in this.changedCells)
         {
-            cells[offset] = value;
+            this.cells[offset] = value;
         }
 
-        activeCells = newActiveCells;
+        this.activeCells = newActiveCells;
     }
 }
 
